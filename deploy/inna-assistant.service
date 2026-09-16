@@ -1,0 +1,21 @@
+# Асистент співробітниці. Копіювати у /etc/systemd/system/inna-assistant.service
+#   sudo cp deploy/inna-assistant.service /etc/systemd/system/
+#   sudo systemctl daemon-reload
+#   sudo systemctl enable --now inna-assistant
+#   journalctl -u inna-assistant -f      # дивитись логи
+[Unit]
+Description=InnaAssistant - personal AI assistant bot
+After=network-online.target
+Wants=network-online.target
+
+[Service]
+Type=simple
+WorkingDirectory=/root/InnaAssistant
+ExecStart=/usr/bin/python3 /root/InnaAssistant/inna_assistant.py
+Restart=always
+RestartSec=5
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
