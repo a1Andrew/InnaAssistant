@@ -28,4 +28,7 @@ with sqlite3.connect(src) as s, sqlite3.connect(dst) as d:
 print(f"OK: {dst}")
 PY
 
-find "$DEST" -name 'inna_assistant-*.db' -mtime +30 -delete
+# Щоденні копії тримаємо 30 днів, а копії за 1-ше число кожного місяця —
+# назавжди. Так завжди є зріз на початок будь-якого місяця за всі роки,
+# а місця це майже не займає: база важить одиниці мегабайт.
+find "$DEST" -name 'inna_assistant-*.db' -mtime +30 ! -name '*-01.db' -delete
