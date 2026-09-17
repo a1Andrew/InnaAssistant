@@ -77,6 +77,62 @@ async def main():
     await ab.run_agent(ab.OWNER_ID, -100500, bot2, [{"role": "user", "content": "…"}], 7)
     ok("відмовилась" in bot2.sent[0][2], "stop_reason=refusal оброблено")
 
+    # ── розшифровка голосових ───────────────────────────────
+    ab.httpx = types.SimpleNamespace()
+    ab.OPENAI_API_KEY = ""
+    try:
+        await ab.transcribe(b"x", ".ogg")
+        ok(False, "без ключа transcribe має впасти зрозумілою помилкою")
+    except RuntimeError as e:
+        ok("OPENAI_API_KEY" in str(e), "без ключа transcribe пояснює, чого бракує")
+
+    captured = {}
+
+    class SttResp:
+        status_code = 200
+        text = ""
+
+        def json(self):
+            return {"text": "  постав задачу на завтра  "}
+
+    class SttClient:
+        def __init__(self, **kw):
+            captured["timeout"] = kw.get("timeout")
+
+        async def __aenter__(self):
+            return self
+
+        async def __aexit__(self, *a):
+            return False
+
+        async def post(self, url, headers=None, files=None, data=None):
+            captured.update(url=url, headers=headers, files=files, data=data)
+            return SttResp()
+
+    ab.httpx = types.SimpleNamespace(AsyncClient=SttClient)
+    ab.OPENAI_API_KEY = "sk-test"
+    text = await ab.transcribe(b"audiobytes", ".ogg")
+    ok(text == "постав задачу на завтра", "текст із відповіді обрізається від пробілів")
+    ok(captured["url"] == ab.STT_URL, "запит іде на потрібний ендпоінт")
+    ok(captured["data"]["model"] == ab.STT_MODEL, "модель передана")
+    ok(captured["headers"]["Authorization"] == "Bearer sk-test", "ключ у заголовку")
+    ok(captured["files"]["file"][1] == b"audiobytes", "аудіо пішло у запит")
+
+    class SttFailResp(SttResp):
+        status_code = 401
+        text = "invalid api key"
+
+    class SttFailClient(SttClient):
+        async def post(self, *a, **kw):
+            return SttFailResp()
+
+    ab.httpx = types.SimpleNamespace(AsyncClient=SttFailClient)
+    try:
+        await ab.transcribe(b"x", ".ogg")
+        ok(False, "помилка API має підніматись")
+    except RuntimeError as e:
+        ok("401" in str(e), "помилка API показує код відповіді")
+
     print("\nПОМИЛОК:", len(FAILS), FAILS)
     return 1 if FAILS else 0
 

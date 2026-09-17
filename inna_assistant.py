@@ -24,12 +24,16 @@ InnaAssistant — особистий AI-асистент в одному міс�
 
 import os
 import json
+import shutil
+import asyncio
+import tempfile
 import sqlite3
 import logging
 import threading
 from datetime import datetime, timedelta, time as dtime, date
 from zoneinfo import ZoneInfo
 
+import httpx
 from dotenv import load_dotenv
 from anthropic import AsyncAnthropic
 from telegram import Update, BotCommand
@@ -81,6 +85,14 @@ WEEKLY_AT = os.getenv("WEEKLY_AT", "19:00")       # неділя — аналі�
 MONTHLY_AT = os.getenv("MONTHLY_AT", "10:00")     # 1-ше число — зріз місяця
 
 MAX_HISTORY = int(os.getenv("MAX_HISTORY", "30"))
+
+# Голосові: Claude не чує аудіо, тому спершу розшифровка через OpenAI.
+# Без ключа бот просто ввічливо скаже, що голосові не ввімкнені.
+OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "").strip()
+STT_MODEL = os.getenv("STT_MODEL", "gpt-transcribe")
+STT_URL = "https://api.openai.com/v1/audio/transcriptions"
+VOICE_MAX_SEC = int(os.getenv("VOICE_MAX_SEC", "600"))      # довші не беремо
+VOICE_MAX_BYTES = 20 * 1024 * 1024                          # ліміт API — 25 МБ
 MAX_STEPS = int(os.getenv("ASSISTANT_MAX_STEPS", "14"))
 MAX_TOKENS = int(os.getenv("ASSISTANT_MAX_TOKENS", "16000"))
 
@@ -1363,6 +1375,97 @@ async def run_agent(uid: int, chat_id: int, bot, history: list,
 
 
 # ─────────────────────────────────────────────────────────────
+#  ГОЛОСОВІ ПОВІДОМЛЕННЯ
+# ─────────────────────────────────────────────────────────────
+
+
+async def _to_mp3(data: bytes, suffix: str) -> tuple[bytes, str]:
+    """Telegram шле ogg/opus, а API приймає mp3/m4a/wav/webm. Конвертуємо ffmpeg."""
+    ffmpeg = shutil.which("ffmpeg")
+    if not ffmpeg:
+        log.warning("ffmpeg не встановлений — шлю аудіо як є (%s)", suffix)
+        return data, f"voice{suffix}"
+    with tempfile.TemporaryDirectory() as tmp:
+        src = os.path.join(tmp, f"in{suffix}")
+        dst = os.path.join(tmp, "out.mp3")
+        with open(src, "wb") as f:
+            f.write(data)
+        proc = await asyncio.create_subprocess_exec(
+            ffmpeg, "-y", "-loglevel", "error", "-i", src,
+            "-ac", "1", "-ar", "16000", "-b:a", "48k", dst,
+            stdout=asyncio.subprocess.DEVNULL, stderr=asyncio.subprocess.PIPE,
+        )
+        _, err = await proc.communicate()
+        if proc.returncode != 0 or not os.path.exists(dst):
+            raise RuntimeError(f"ffmpeg не впорався: {err.decode()[:200]}")
+        with open(dst, "rb") as f:
+            return f.read(), "voice.mp3"
+
+
+async def transcribe(data: bytes, suffix: str) -> str:
+    """Аудіо → текст. Порожній результат означає, що нічого не розібрали."""
+    if not OPENAI_API_KEY:
+        raise RuntimeError(
+            "Голосові поки не ввімкнені: у .env немає OPENAI_API_KEY."
+        )
+    audio, filename = await _to_mp3(data, suffix)
+    async with httpx.AsyncClient(timeout=120) as client:
+        r = await client.post(
+            STT_URL,
+            headers={"Authorization": f"Bearer {OPENAI_API_KEY}"},
+            files={"file": (filename, audio, "audio/mpeg")},
+            data={"model": STT_MODEL},
+        )
+    if r.status_code != 200:
+        raise RuntimeError(f"розшифровка не вдалася ({r.status_code}): {r.text[:200]}")
+    return (r.json().get("text") or "").strip()
+
+
+async def handle_voice(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
+    """Голосове, аудіо або кружечок → текст → звичайний розбір задачі."""
+    uid = update.effective_user.id
+    chat = update.effective_chat
+    if not is_allowed(uid):
+        log.warning("Чужий користувач id=%s надіслав аудіо", uid)
+        return
+
+    msg = update.message
+    media = msg.voice or msg.audio or msg.video_note
+    if media is None:
+        return
+    thread_id = msg.message_thread_id if msg.is_topic_message else None
+
+    if (media.duration or 0) > VOICE_MAX_SEC:
+        await msg.reply_text(
+            f"Це задовге аудіо ({media.duration // 60} хв). "
+            f"Розшифровую до {VOICE_MAX_SEC // 60} хв — запиши коротшими шматками."
+        )
+        return
+    if (media.file_size or 0) > VOICE_MAX_BYTES:
+        await msg.reply_text("Файл завеликий, максимум 20 МБ.")
+        return
+
+    await chat.send_action(ChatAction.TYPING, message_thread_id=thread_id)
+    try:
+        tg_file = await ctx.bot.get_file(media.file_id)
+        data = bytes(await tg_file.download_as_bytearray())
+        suffix = os.path.splitext(tg_file.file_path or "")[1] or ".ogg"
+        text = await transcribe(data, suffix)
+    except Exception as e:
+        log.exception("Не вдалося розшифрувати голосове")
+        await msg.reply_text(f"🎙 Не вийшло розібрати голосове: {e}")
+        return
+
+    if not text:
+        await msg.reply_text("🎙 Нічого не розібрала — спробуй ще раз, будь ласка.")
+        return
+
+    # Показуємо розшифровку, щоб було видно, що саме бот почув.
+    await send_chunks(ctx.bot, chat.id, f"🎙 Почула: {text}", thread_id)
+    await process_text(update, ctx, text)
+
+
+# ─────────────────────────────────────────────────────────────
 #  ОБРОБНИК ПОВІДОМЛЕНЬ
 # ─────────────────────────────────────────────────────────────
 
@@ -1408,12 +1511,16 @@ async def handle_message(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None
         if chat.type == "private":
             await update.message.reply_text(f"⛔️ Немає доступу. Твій ID: {uid}")
         return
+    await process_text(update, ctx, update.message.text)
 
+
+async def process_text(update: Update, ctx: ContextTypes.DEFAULT_TYPE, text: str) -> None:
+    """Спільний шлях для написаного тексту й розшифрованого голосового."""
+    chat = update.effective_chat
     chat_id = chat.id
     thread_id = update.message.message_thread_id if update.message.is_topic_message else None
     remember_chat(chat_id)
 
-    text = update.message.text
     topic = topic_of(chat_id, thread_id)
     if topic:
         # Тема гілки = контекст: задачі з неї одразу лягають у правильний напрямок.
@@ -1455,7 +1562,7 @@ async def ask_assistant(bot, chat_id: int, prompt: str, thread_id: int | None = 
 # purpose, назва теми, напрямок за замовчуванням, вітальне слово
 TOPIC_PLAN = [
     ("plan", "🌅 План дня", "",
-     "Сюди щоранку приходить план на день, а ввечері — підсумок. Пиши тут, що зробила."),
+     "Сюди щоранку приходить план на день, а ввечері — підсумок. Пиши тут, що зробила. Можна голосовим — я розшифрую і занесу."),
     ("work", "📋 Наша робота", "Наша робота",
      "Задачі команді й контроль виконання. Свою задачу пиши як є: «договір до "
      "п'ятниці». Задачу комусь із команди — з іменем на початку: «Ім'я — "
@@ -1611,7 +1718,7 @@ async def cmd_topics(update: Update, ctx: ContextTypes.DEFAULT_TYPE) -> None:
 
 HELP = (
     "Я твоя система: задачі, напрямки, контент-план, тіло, навчання — все в одному місці.\n\n"
-    "Просто пиши як людині:\n"
+    "Просто пиши або надиктовуй голосове — я розшифрую:\n"
     "• «договір для клієнта до п'ятниці, терміново»\n"
     "• «зроби контент-план на тиждень по темі суду»\n"
     "• «рілс про докази набрав 12к переглядів, 300 збережень»\n"
@@ -1882,6 +1989,8 @@ def main() -> None:
     app.add_handler(CommandHandler("export", cmd_export))
     app.add_handler(CommandHandler("id", cmd_id))
     app.add_handler(MessageHandler(filters.TEXT & ~filters.COMMAND, handle_message))
+    app.add_handler(MessageHandler(
+        filters.VOICE | filters.AUDIO | filters.VIDEO_NOTE, handle_voice))
 
     jq = app.job_queue
     if jq is None:
@@ -1903,6 +2012,8 @@ def main() -> None:
     log.info("Модель: %s", MODEL)
     log.info("Власниця бази: %s, доступ: %s", OWNER_ID, ALLOWED_IDS)
     log.info("База: %s", DB_PATH)
+    log.info("Голосові: %s", f"увімкнено ({STT_MODEL})" if OPENAI_API_KEY
+             else "вимкнено (немає OPENAI_API_KEY)")
     log.info("✅ Асистент запущено")
 
     app.run_polling()
