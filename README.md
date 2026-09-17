@@ -80,7 +80,8 @@
 cd /root
 git clone https://github.com/a1Andrew/InnaAssistant.git
 cd InnaAssistant
-pip install -r requirements.txt
+python3 -m venv venv                  # на Ubuntu 24.04 без venv pip лається
+venv/bin/pip install -r requirements.txt
 cp .env.example .env && nano .env
 ```
 
@@ -129,8 +130,8 @@ crontab -e
 ## 6. Перевірка після змін у коді
 
 ```bash
-python3 tests/test_assistant_data.py    # база, інструменти, зрізи
-python3 tests/test_assistant_loop.py    # цикл агента із заглушкою API
+venv/bin/python tests/test_assistant_data.py    # база, інструменти, зрізи
+venv/bin/python tests/test_assistant_loop.py    # цикл агента із заглушкою API
 ```
 
 Обидва працюють на тимчасовій базі й не ходять у мережу.

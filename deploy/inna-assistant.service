@@ -1,4 +1,5 @@
-# Асистент співробітниці. Копіювати у /etc/systemd/system/inna-assistant.service
+# Копіювати у /etc/systemd/system/inna-assistant.service
+# Шлях у ExecStart — python з venv проєкту (на Ubuntu 24.04 інакше не поставити пакети)
 #   sudo cp deploy/inna-assistant.service /etc/systemd/system/
 #   sudo systemctl daemon-reload
 #   sudo systemctl enable --now inna-assistant
@@ -11,7 +12,7 @@ Wants=network-online.target
 [Service]
 Type=simple
 WorkingDirectory=/root/InnaAssistant
-ExecStart=/usr/bin/python3 /root/InnaAssistant/inna_assistant.py
+ExecStart=/root/InnaAssistant/venv/bin/python /root/InnaAssistant/inna_assistant.py
 Restart=always
 RestartSec=5
 StandardOutput=journal
