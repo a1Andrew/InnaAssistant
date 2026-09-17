@@ -31,7 +31,7 @@ class FakeMessages:
             return FakeResp([
                 blk(type="text", text="Записую."),
                 blk(type="tool_use", id="tu_1", name="add_task",
-                    input={"title": "Договір", "assignee": "Оля", "priority": 1}),
+                    input={"title": "Договір", "assignee": "Співробітник", "priority": 1}),
             ], "tool_use")
         return FakeResp([blk(type="text", text="Готово, задача в системі.")], "end_turn")
 
@@ -47,7 +47,7 @@ async def main():
     fake = FakeMessages()
     ab.claude = types.SimpleNamespace(messages=fake)
     bot = FakeBot()
-    history = [{"role": "user", "content": "постав Олі договір, терміново"}]
+    history = [{"role": "user", "content": "договір на співробітника, терміново"}]
     await ab.run_agent(ab.OWNER_ID, -100500, bot, history, thread_id=7)
 
     ok(len(fake.calls) == 2, "два кроки: інструмент, потім відповідь")
@@ -58,7 +58,7 @@ async def main():
     ok(bot.sent[-1][2] == "Готово, задача в системі.", "фінальний текст доставлено")
 
     rows = ab.q("SELECT * FROM tasks WHERE owner_id = ?", (ab.OWNER_ID,))
-    ok(len(rows) == 1 and rows[0]["assignee"] == "Оля" and rows[0]["priority"] == 1,
+    ok(len(rows) == 1 and rows[0]["assignee"] == "Співробітник" and rows[0]["priority"] == 1,
        "інструмент реально записав задачу в базу")
 
     # history — той самий список, який бачила модель на другому кроці

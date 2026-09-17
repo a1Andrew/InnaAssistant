@@ -35,7 +35,7 @@ print(ab.t_add_project(U, {"name": "наша РОБОТА"}))
 ok(len(ab.q("SELECT * FROM projects WHERE owner_id=?", (U,))) == 1, "напрямок не дублюється")
 
 r = ab.t_add_task(U, {"title": "Договір для клієнта", "project": "Право і порядок",
-                      "assignee": "Оля", "priority": 1, "due_date": "today"})
+                      "assignee": "Співробітник", "priority": 1, "due_date": "today"})
 print(r)
 tid = int(r.split("#")[1].split()[0])
 print(ab.t_add_task(U, {"title": "Зарядка", "repeat": "daily", "plan_date": "today"}))
@@ -43,9 +43,9 @@ print(ab.t_add_task(U, {"title": "Старий борг", "due_date": "2020-01-0
 
 out = ab.t_list_tasks(U, {"scope": "today"})
 ok("Договір" in out and "Зарядка" in out, "scope=today показує сьогоднішні")
-ok("@Оля" in out, "виконавець видно у списку")
+ok("@Співробітник" in out, "виконавець видно у списку")
 ok("Старий борг" in ab.t_list_tasks(U, {"scope": "overdue"}), "scope=overdue ловить прострочене")
-ok("Договір" in ab.t_list_tasks(U, {"assignee": "оля"}), "фільтр по виконавцю без регістру")
+ok("Договір" in ab.t_list_tasks(U, {"assignee": "співробітник"}), "фільтр по виконавцю без регістру")
 ok(ab.project_name(ab.q("SELECT project_id p FROM tasks WHERE id=?", (tid,))[0]["p"]) == "Право і порядок",
    "напрямок створився автоматично з задачі")
 
