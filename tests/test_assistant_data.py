@@ -108,5 +108,16 @@ ab.remember_chat(-100123)
 ab.remember_chat(555)
 ok(ab.default_chat() == -100123, "група лишається адресою розкладу")
 
+# меню команд: назви валідні й кожна справді має обробник
+import re
+src = open(os.path.join(os.path.dirname(os.path.dirname(os.path.abspath(__file__))),
+                        "inna_assistant.py"), encoding="utf-8").read()
+handlers = set(re.findall(r'CommandHandler\("(\w+)"', src))
+menu = {c for c, _ in ab.BOT_COMMANDS}
+ok(menu <= handlers, f"усі команди меню мають обробник (зайві: {menu - handlers})")
+ok(all(re.fullmatch(r"[a-z0-9_]{1,32}", c) for c, _ in ab.BOT_COMMANDS),
+   "назви команд у форматі Telegram")
+ok(all(0 < len(d) <= 256 for _, d in ab.BOT_COMMANDS), "описи команд не порожні й не довгі")
+
 print("\nПОМИЛОК:", len(FAILS), FAILS)
 sys.exit(1 if FAILS else 0)

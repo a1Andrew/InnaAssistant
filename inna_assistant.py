@@ -32,7 +32,7 @@ from zoneinfo import ZoneInfo
 
 from dotenv import load_dotenv
 from anthropic import AsyncAnthropic
-from telegram import Update
+from telegram import Update, BotCommand
 from telegram.constants import ChatAction
 from telegram.ext import (
     Application,
@@ -1812,6 +1812,38 @@ def _time(value: str, fallback: str) -> dtime:
 # ─────────────────────────────────────────────────────────────
 
 
+# Меню команд у Telegram: з'являється по кнопці «/» — нічого шукати не треба.
+BOT_COMMANDS = [
+    ("today", "План на день"),
+    ("evening", "Підсумок дня"),
+    ("week", "Аналіз тижня"),
+    ("month", "Зріз місяця"),
+    ("tasks", "Відкриті задачі"),
+    ("content", "Контент-план"),
+    ("goals", "Цілі"),
+    ("projects", "Напрямки"),
+    ("setup", "Розгорнути теми в групі"),
+    ("newtopic", "Нова тема під напрямок"),
+    ("bind", "Прив'язати тему до напрямку"),
+    ("topics", "Список тем"),
+    ("export", "Вивантажити базу файлом"),
+    ("reset", "Почати діалог заново"),
+    ("info", "Стан системи"),
+    ("id", "Мій Telegram ID"),
+    ("help", "Що я вмію"),
+]
+
+
+async def on_start(app: Application) -> None:
+    """Реєструє меню команд. Не вийшло — не біда, бот працює далі."""
+    try:
+        await app.bot.set_my_commands([BotCommand(c, d) for c, d in BOT_COMMANDS])
+        me = await app.bot.get_me()
+        log.info("Бот @%s готовий, меню команд оновлено", me.username)
+    except Exception as e:
+        log.warning("Не вдалося оновити меню команд: %s", e)
+
+
 def main() -> None:
     if not TELEGRAM_BOT_TOKEN:
         raise SystemExit("❌ Немає ASSISTANT_BOT_TOKEN у .env")
@@ -1820,7 +1852,7 @@ def main() -> None:
     if not ALLOWED_IDS:
         raise SystemExit("❌ ASSISTANT_USER_IDS порожній — це персональна база, потрібен whitelist.")
 
-    app = Application.builder().token(TELEGRAM_BOT_TOKEN).build()
+    app = Application.builder().token(TELEGRAM_BOT_TOKEN).post_init(on_start).build()
 
     app.add_handler(CommandHandler("start", cmd_start))
     app.add_handler(CommandHandler("help", cmd_help))
