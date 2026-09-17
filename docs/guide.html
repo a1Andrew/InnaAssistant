@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="utf-8">
+<title>Твоя система — справка</title>
+<style>
+  @page { size: A4; margin: 16mm 15mm 14mm 15mm; }
+
+  :root {
+    --ink: #22201e;
+    --muted: #6b645e;
+    --accent: #a85a3c;
+    --accent-soft: #f6efe9;
+    --line: #e3dcd5;
+    --green: #4a7a52;
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    font-family: "Liberation Sans", "DejaVu Sans", sans-serif;
+    font-size: 10.5pt;
+    line-height: 1.5;
+    color: var(--ink);
+  }
+
+  h1, h2, h3 { font-family: "Liberation Serif", "DejaVu Serif", serif; }
+
+  /* ── Обложка ───────────────────────────────────────── */
+  .cover { padding-top: 6mm; }
+  .cover .kicker {
+    font-size: 9pt; letter-spacing: .18em; text-transform: uppercase;
+    color: var(--accent); font-weight: bold; margin-bottom: 6mm;
+  }
+  h1 { font-size: 30pt; line-height: 1.1; margin: 0 0 4mm; }
+  .cover .sub { font-size: 13pt; color: var(--muted); margin: 0 0 8mm; }
+
+  /* ── Заголовки разделов ────────────────────────────── */
+  h2 {
+    font-size: 15pt; margin: 7mm 0 2.5mm;
+    padding-bottom: 1.5mm; border-bottom: 2px solid var(--accent);
+    page-break-after: avoid;
+  }
+  h3 { font-size: 11.5pt; margin: 5mm 0 1.5mm; page-break-after: avoid; }
+  p { margin: 0 0 3mm; }
+
+  /* ── Плашки ────────────────────────────────────────── */
+  .box {
+    background: var(--accent-soft);
+    border-left: 3px solid var(--accent);
+    padding: 3.5mm 5mm; margin: 3.5mm 0;
+    page-break-inside: avoid;
+  }
+  .box.calm { background: #f2f6f2; border-left-color: var(--green); }
+  .box p:last-child { margin-bottom: 0; }
+  .box .lead { font-size: 12pt; font-family: "Liberation Serif", serif; }
+
+  /* ── Таблицы ───────────────────────────────────────── */
+  table { width: 100%; border-collapse: collapse; margin: 3mm 0 5mm; }
+  th {
+    text-align: left; font-size: 8.5pt; text-transform: uppercase;
+    letter-spacing: .08em; color: var(--muted); font-weight: bold;
+    border-bottom: 1.5px solid var(--line); padding: 0 3mm 1.5mm 0;
+  }
+  td { padding: 1.9mm 3mm 1.9mm 0; border-bottom: 1px solid var(--line);
+       vertical-align: top; }
+  tr { page-break-inside: avoid; }
+  td.topic { white-space: nowrap; font-weight: bold; width: 32mm; }
+  td.say { width: 46%; }
+  .say q { font-style: normal; color: var(--accent); }
+  .say q::before { content: "«"; } .say q::after { content: "»"; }
+
+  /* ── Шаги ──────────────────────────────────────────── */
+  ol.steps { counter-reset: s; list-style: none; padding: 0; margin: 3mm 0; }
+  ol.steps li {
+    counter-increment: s; position: relative;
+    padding: 0 0 3mm 10mm; page-break-inside: avoid;
+  }
+  ol.steps li::before {
+    content: counter(s);
+    position: absolute; left: 0; top: 0;
+    width: 6.5mm; height: 6.5mm; border-radius: 50%;
+    background: var(--accent); color: #fff;
+    font-size: 9pt; font-weight: bold;
+    display: flex; align-items: center; justify-content: center;
+  }
+
+  /* ── Поток «что происходит» ────────────────────────── */
+  .flow { margin: 4mm 0; page-break-inside: avoid; }
+  .flow-row { display: flex; gap: 4mm; align-items: baseline; padding: 2mm 0;
+              border-bottom: 1px dashed var(--line); }
+  .flow-row:last-child { border-bottom: none; }
+  .flow-n { color: var(--accent); font-weight: bold; width: 5mm; flex: none; }
+  .flow-t strong { display: block; }
+  .flow-t span { color: var(--muted); }
+
+  /* ── Расписание ────────────────────────────────────── */
+  .sched td:first-child {
+    white-space: nowrap; font-weight: bold; width: 38mm; color: var(--accent);
+  }
+
+  /* ── Команды ───────────────────────────────────────── */
+  .cmds { column-count: 2; column-gap: 8mm; margin: 3mm 0; }
+  .cmd { break-inside: avoid; padding: 1.2mm 0; font-size: 10pt; }
+  .cmd code {
+    font-family: "Liberation Mono", "DejaVu Sans Mono", monospace;
+    color: var(--accent); font-weight: bold;
+  }
+
+  ul.tight { margin: 2mm 0 3mm; padding-left: 5mm; }
+  ul.tight li { margin-bottom: 1.5mm; }
+
+  .footer {
+    margin-top: 6mm; padding-top: 3mm; border-top: 1px solid var(--line);
+    font-size: 8.5pt; color: var(--muted);
+  }
+  .pbreak { page-break-before: always; }
+  .nobreak { page-break-inside: avoid; }
+</style>
+</head>
+<body>
+
+<div class="cover">
+  <div class="kicker">Личный помощник · Telegram</div>
+  <h1>Твоя система</h1>
+  <p class="sub">Одно место, где живут работа, команда, контент,<br>тело, учёба и быт. И помощник, который всё это складывает.</p>
+</div>
+
+<div class="box">
+  <p class="lead"><strong>Самое главное, и больше по сути ничего знать не нужно.</strong></p>
+  <p>Пиши помощнику как живому человеку — обычными словами, текстом или голосом.
+  Он сам поймёт, что это было: задача, тренировка, идея для рилса, цифра по публикации, —
+  и положит куда надо. Тебе не нужно выбирать категории, заполнять поля и помнить,
+  где что лежит.</p>
+  <p><strong>Запуталась в темах — пиши в любую.</strong> Ничего не сломается и не потеряется.</p>
+</div>
+
+<h2>С чего начать сегодня</h2>
+
+<ol class="steps">
+  <li><strong>Открой группу и напиши в тему «🌅 План дня»</strong> что-нибудь простое,
+      что и так в голове: <em>«завтра в 11 суд по делу Петренко»</em>.</li>
+  <li><strong>Спроси:</strong> <em>«что у меня на сегодня?»</em> — посмотри, что ответит.</li>
+  <li><strong>Всё.</strong> Дальше просто пиши туда, что приходит в голову, в течение дня.</li>
+</ol>
+
+<div class="box calm">
+  <p><strong>Первую неделю вообще не думай про структуру.</strong> Просто вываливай всё
+  подряд — задачи, мысли, тренировки, идеи. В воскресенье попроси
+  <em>«сделай анализ недели»</em> — и увидишь, во что это само сложилось.
+  Вот тогда станет понятно, чего не хватает и что настроить под себя.</p>
+</div>
+
+<h2>Что происходит, когда ты пишешь</h2>
+
+<div class="flow">
+  <div class="flow-row">
+    <div class="flow-n">1</div>
+    <div class="flow-t"><strong>Ты пишешь или диктуешь обычными словами</strong>
+      <span>«Марине — подготовить иск до вторника, это срочно»</span></div>
+  </div>
+  <div class="flow-row">
+    <div class="flow-n">2</div>
+    <div class="flow-t"><strong>Помощник понимает смысл</strong>
+      <span>это задача · исполнитель Марина · срок вторник · высокий приоритет</span></div>
+  </div>
+  <div class="flow-row">
+    <div class="flow-n">3</div>
+    <div class="flow-t"><strong>Записывает в базу</strong>
+      <span>не в переписку, а в отдельное хранилище — переписку можно чистить, данные останутся</span></div>
+  </div>
+  <div class="flow-row">
+    <div class="flow-n">4</div>
+    <div class="flow-t"><strong>Отвечает, что записал</strong>
+      <span>и дальше эта задача сама всплывёт в плане дня, а во вторник — в списке дедлайнов</span></div>
+  </div>
+</div>
+
+<p><strong>Чем это отличается от блокнота.</strong> Блокнот хранит текст — и через месяц
+ты листаешь тридцать страниц, чтобы найти нужное. Здесь помощник понимает
+смысл каждой записи, поэтому потом можно спрашивать словами:
+<em>«что висит на Марине?»</em>, <em>«сколько я тренировалась в августе?»</em>,
+<em>«какие рилсы зашли лучше всего?»</em> — и получать ответ, а не поиск по тексту.</p>
+
+<h2 class="pbreak">Темы — это просто папки</h2>
+
+<p>В группе девять тем. Это не девять новых обязанностей, а подписанные полки:
+запись из темы «Контент» сама попадает в направление Instagram, из «Тело» — в дневник
+тренировок. Нужно это ровно для одного: чтобы потом не искать.</p>
+
+<table>
+  <tr><th>Тема</th><th>Что туда писать</th></tr>
+  <tr><td class="topic">🌅 План дня</td><td>Сюда утром приходит план, вечером — итог. Пиши, что сделала и что появилось нового.</td></tr>
+  <tr><td class="topic">📋 Наша работа</td><td>Задачи команде и контроль: кто что делает, к какому сроку, что уже висит неделю.</td></tr>
+  <tr><td class="topic">⚖️ Проекты</td><td>Отдельные проекты. Под большой проект можно завести свою тему.</td></tr>
+  <tr><td class="topic">📸 Контент</td><td>Идеи, сценарии, контент-план и цифры вышедших публикаций.</td></tr>
+  <tr><td class="topic">💪 Тело</td><td>Тренировки, питание, вес, самочувствие.</td></tr>
+  <tr><td class="topic">📚 Учёба</td><td>Маркетинг, английский: что проходила и сколько занималась.</td></tr>
+  <tr><td class="topic">🏡 Быт</td><td>Бытовые дела, чтобы не держать их в голове.</td></tr>
+  <tr><td class="topic">📊 Итоги</td><td>Сюда приходит анализ недели и срез месяца. Писать самой не нужно.</td></tr>
+  <tr><td class="topic">💡 Идеи</td><td>Всё, что пришло в голову и жалко потерять. Разберём потом.</td></tr>
+</table>
+
+<div class="box">
+  <p><strong>Если написала не туда — ничего страшного.</strong> Помощник ориентируется
+  на смысл, а не на тему. Тренировку, записанную в «Быт», он всё равно занесёт
+  в дневник тела. Тема — подсказка, а не правило.</p>
+  <p>Не хочешь пользоваться темами вообще — пиши всё в «🌅 План дня». Так тоже работает.</p>
+</div>
+
+<h2>Шпаргалка: что сказать и что получится</h2>
+
+<table>
+  <tr><th>Ты говоришь</th><th>Что произойдёт</th></tr>
+  <tr>
+    <td class="say"><q>Марине — подготовить иск до вторника, срочно</q></td>
+    <td>Задача на Марину с дедлайном и высоким приоритетом. Во вторник напомнит.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Что там по Марине?</q></td>
+    <td>Список её задач: что сделано, что висит и сколько дней.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Договор для клиента до пятницы</q></td>
+    <td>Твоя личная задача — имя не указано, значит твоя.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Сделай контент-план на неделю: 3 рилса и 2 поста про суд</q></td>
+    <td>Пять записей в контент-плане с датами и темами. Можно править словами.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Рилс про доказательства — 12к просмотров, 300 сохранений</q></td>
+    <td>Цифры лягут к публикации и попадут в анализ: что заходит, а что нет.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Сегодня ноги 50 минут, вес 58.4</q></td>
+    <td>Две записи в дневнике тела. Дальше видно динамику по неделям.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Английский 45 минут, present perfect</q></td>
+    <td>Отметка занятия. В итогах месяца будет видно регулярность.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Цель на месяц — 10 тысяч подписчиков</q></td>
+    <td>Цель с измеримым показателем. Помощник сам будет спрашивать про прогресс.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Напомни завтра в 10 позвонить в суд</q></td>
+    <td>Придёт сообщение ровно в это время.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Расставь приоритеты на завтра</q></td>
+    <td>3–5 главных дел по порядку, с объяснением почему именно они.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Что я делала в марте?</q></td>
+    <td>Срез за любой прошедший период — данные хранятся без срока давности.</td>
+  </tr>
+  <tr>
+    <td class="say"><q>Я не вывожу, помоги разгрузить день</q></td>
+    <td>Посмотрит, что реально горит, а что можно перенести, и предложит план.</td>
+  </tr>
+</table>
+
+<h2 class="pbreak">Что приходит само, без запроса</h2>
+
+<table class="sched">
+  <tr><th>Когда</th><th>Что придёт</th></tr>
+  <tr><td>Каждый день 8:30</td><td>План на день: 3–5 главных дел, дедлайны, что висит на людях. В тему «🌅 План дня».</td></tr>
+  <tr><td>Каждый день 21:00</td><td>Итог дня: что закрыто, что переносим на завтра, что забыла записать.</td></tr>
+  <tr><td>Воскресенье 19:00</td><td>Анализ недели по всем направлениям: где продвинулись, где просело, как сработал контент.</td></tr>
+  <tr><td>1-е число, 10:00</td><td>Срез месяца: куда реально уходило время, прогресс по целям, три приоритета на следующий месяц.</td></tr>
+</table>
+
+<p>Плюс напоминания в то время, о котором попросила. Время рассылок можно сдвинуть —
+скажи Андрею, меняется одной строчкой.</p>
+
+<h2>Голосовые сообщения</h2>
+
+<p>Можно ничего не печатать. Зажми микрофон и наговори как есть — «так, завтра суд
+в одиннадцать, потом созвон с Мариной, и надо снять рилс про доказательства».
+Помощник разберёт всё на отдельные записи.</p>
+
+<p>Он всегда показывает строку <strong>«🎙 Услышала: …»</strong> — это расшифровка
+твоего голосового. Взгляни на неё: если что-то расслышал неправильно, просто поправь
+следующим сообщением.</p>
+
+<h2>Команды</h2>
+
+<p>Это не обязательно — всё то же самое можно попросить словами. Но так быстрее:</p>
+
+<div class="cmds">
+  <div class="cmd"><code>/today</code> — план на день</div>
+  <div class="cmd"><code>/evening</code> — итог дня</div>
+  <div class="cmd"><code>/week</code> — анализ недели</div>
+  <div class="cmd"><code>/month</code> — срез месяца</div>
+  <div class="cmd"><code>/tasks</code> — все открытые задачи</div>
+  <div class="cmd"><code>/content</code> — контент-план</div>
+  <div class="cmd"><code>/goals</code> — цели</div>
+  <div class="cmd"><code>/projects</code> — направления</div>
+  <div class="cmd"><code>/newtopic</code> Название — новая тема</div>
+  <div class="cmd"><code>/export</code> — вся база одним файлом</div>
+  <div class="cmd"><code>/reset</code> — начать разговор заново</div>
+  <div class="cmd"><code>/info</code> — состояние системы</div>
+</div>
+
+<h2>Если что-то пошло не так</h2>
+
+<table>
+  <tr><th>Ситуация</th><th>Что делать</th></tr>
+  <tr><td class="say">Записал неправильно</td>
+      <td>Скажи словами: <q>исправь задачу 12, срок не пятница, а среда</q></td></tr>
+  <tr><td class="say">Записал лишнее</td>
+      <td><q>Удали задачу 12</q> или <q>отметь 12 как отменённую</q></td></tr>
+  <tr><td class="say">Не отвечает или отвечает странно</td>
+      <td>Напиши <code>/reset</code> — разговор начнётся с чистого листа,
+          <strong>записи при этом остаются</strong></td></tr>
+  <tr><td class="say">Хочу забрать всё себе</td>
+      <td><code>/export</code> — пришлёт файл со всей базой. Можно делать раз в месяц
+          и хранить у себя</td></tr>
+  <tr><td class="say">Что-то сломалось совсем</td>
+      <td>Напиши Андрею — у него доступ к той же системе, он видит, что происходит</td></tr>
+</table>
+
+<h2>Что важно знать про данные</h2>
+
+<ul class="tight">
+  <li><strong>Ничего не теряется и не устаревает.</strong> Записи хранятся без ограничения
+      по времени: через год можно спросить, что было этой осенью.</li>
+  <li><strong>Доступ только у тебя и у Андрея.</strong> Посторонний, даже попав в группу,
+      для помощника не существует — он просто не отвечает.</li>
+  <li><strong>Копия базы делается каждую ночь.</strong> Копии за первое число каждого
+      месяца хранятся всегда.</li>
+  <li><strong>Переписку можно чистить.</strong> Данные живут отдельно от чата, удаление
+      сообщений на них не влияет.</li>
+</ul>
+
+<h2>Первая неделя — спокойный вход</h2>
+
+<ol class="steps">
+  <li><strong>Дни 1–2.</strong> Просто пиши всё подряд, не сортируя. Цель — привыкнуть,
+      что мысль уходит не в голову, а сюда.</li>
+  <li><strong>День 3.</strong> Попроси <em>«расставь приоритеты на завтра»</em>.
+      Посмотри, согласна ли с порядком — и скажи, если нет.</li>
+  <li><strong>День 5.</strong> Занеси две-три цели на месяц. С этого момента помощник
+      начнёт связывать текущие дела с тем, куда ты идёшь.</li>
+  <li><strong>Воскресенье.</strong> Прочитай анализ недели. Вот здесь обычно и появляется
+      ощущение, что оно работает.</li>
+</ol>
+
+<div class="box">
+  <p class="lead"><strong>И последнее.</strong></p>
+  <p>Не старайся сразу построить идеальную систему — это как раз то, из-за чего
+  обычно всё и бросают. Достаточно просто писать. Структуру помощник соберёт сам,
+  на то он и помощник. А если чего-то не хватает или что-то раздражает — скажи,
+  это меняется.</p>
+</div>
+
+<div class="footer">
+  Справка по личному помощнику в Telegram · сентябрь 2026
+</div>
+
+</body>
+</html>
