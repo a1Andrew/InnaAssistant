@@ -64,12 +64,10 @@ for table, label in (("tasks", "задач"), ("content", "контенту"),
     n = db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
     print(f"{label}: {n}")
 
-last = db.execute(
-    "SELECT created_at, title FROM tasks ORDER BY id DESC LIMIT 6").fetchall()
-if last:
-    print("\nостанні записані задачі:")
-    for created, title in last:
-        print(f"   {created}  {title[:60]}")
+# Назви задач навмисно не друкуємо: це особисті дані власниці, а діагностику
+# читає адміністратор сервера. Досить знати, що записи з'являються.
+last = db.execute("SELECT max(created_at) FROM tasks").fetchone()[0]
+print("останній запис у базі:", last or "—")
 PY
 
 echo
