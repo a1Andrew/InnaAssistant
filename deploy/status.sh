@@ -34,6 +34,15 @@ else
 fi
 
 echo
+echo "═══ ЧИ БАЧИТЬ БОТ ПОВІДОМЛЕННЯ В ГРУПАХ ═══"
+TOKEN=$(grep -E "^ASSISTANT_BOT_TOKEN=" "$DIR/.env" 2>/dev/null | head -1 | cut -d= -f2-)
+if [ -n "$TOKEN" ]; then
+    "$PY" "$DIR/deploy/check_privacy.py" "$TOKEN"
+else
+    echo "токена в .env немає"
+fi
+
+echo
 echo "═══ БАЗА ═══"
 "$PY" - "$DIR/inna_assistant.db" <<'PY'
 import os, sqlite3, sys

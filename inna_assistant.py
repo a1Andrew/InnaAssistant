@@ -1959,6 +1959,18 @@ async def on_start(app: Application) -> None:
         await app.bot.set_my_commands([BotCommand(c, d) for c, d in BOT_COMMANDS])
         me = await app.bot.get_me()
         log.info("Бот @%s готовий, меню команд оновлено", me.username)
+        # Найчастіша причина «бот мовчить у групі»: Telegram віддає йому лише
+        # команди. Це вмикається за замовчуванням, і зміна в BotFather діє
+        # тільки для груп, куди бота додали ПІСЛЯ неї.
+        if not me.can_read_all_group_messages:
+            log.warning(
+                "У ГРУПАХ БОТ БАЧИТЬ ЛИШЕ КОМАНДИ (/...), звичайний текст до "
+                "нього не доходить. Полагодити: @BotFather -> /mybots -> бот -> "
+                "Bot Settings -> Group Privacy -> Turn off, а потім ВИДАЛИТИ "
+                "бота з групи і додати знову."
+            )
+        else:
+            log.info("У групах бот бачить усі повідомлення (privacy вимкнено)")
     except Exception as e:
         log.warning("Не вдалося оновити меню команд: %s", e)
 
