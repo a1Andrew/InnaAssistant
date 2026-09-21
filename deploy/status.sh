@@ -54,17 +54,39 @@ for table, label in (("tasks", "задач"), ("content", "контенту"),
                      ("logs", "записів щоденника"), ("notes", "нотаток")):
     n = db.execute(f"SELECT count(*) FROM {table}").fetchone()[0]
     print(f"{label}: {n}")
+
+last = db.execute(
+    "SELECT created_at, title FROM tasks ORDER BY id DESC LIMIT 6").fetchall()
+if last:
+    print("\nостанні записані задачі:")
+    for created, title in last:
+        print(f"   {created}  {title[:60]}")
 PY
 
 echo
 echo "═══ ОСТАННЯ АКТИВНІСТЬ (крім опитувань Telegram) ═══"
 if command -v journalctl >/dev/null; then
-    journalctl -u inna-assistant --no-pager -n 300 2>/dev/null \
-        | grep -vE "getUpdates|reminders" | tail -12
-    echo "---"
-    echo -n "вхідних повідомлень за добу: "
-    journalctl -u inna-assistant --no-pager --since "1 day ago" 2>/dev/null \
-        | grep -cE "TOOL |Чужий користувач|steps="
+    LOG=$(journalctl -u inna-assistant --no-pager --since "2 days ago" 2>/dev/null)
+
+    echo -n "оброблено звернень (бот відповів): "
+    echo "$LOG" | grep -c "steps=" 
+    echo "останнє оброблене звернення:"
+    echo "$LOG" | grep "steps=" | tail -1 | cut -c1-120
+    echo
+
+    echo "ВІДХИЛЕНІ (ID не в списку дозволених):"
+    rejected=$(echo "$LOG" | grep -oE "Чужий користувач id=[0-9]+" | sort | uniq -c)
+    if [ -n "$rejected" ]; then
+        echo "$rejected"
+        echo "↑ якщо тут є ID Інни — просто додай його в ASSISTANT_USER_IDS у .env"
+    else
+        echo "   немає — усі повідомлення приймалися"
+    fi
+    echo
+
+    echo "останні помилки, якщо були:"
+    errors=$(echo "$LOG" | grep -E "Помилка|Traceback|ERROR" | tail -5 | cut -c1-150)
+    echo "${errors:-   немає}"
 else
     echo "journalctl недоступний"
 fi
